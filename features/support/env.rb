@@ -41,21 +41,21 @@ Cucumber::Rails::World.use_transactional_fixtures = false
 
 require File.join(File.dirname(__FILE__), "database_cleaner_patches")
 
-require File.join(File.dirname(__FILE__), "..", "..", "spec", "support", "fake_redis")
+#require File.join(File.dirname(__FILE__), "..", "..", "spec", "support", "fake_redis")
+require File.join(File.dirname(__FILE__), "..", "..", "spec", "support", "fake_http_request")
+require File.join(File.dirname(__FILE__), "..", "..", "spec", "support", "fake_resque")
+require File.join(File.dirname(__FILE__), "..", "..", "spec", "support", "receive_tokens_stub")
 require File.join(File.dirname(__FILE__), "..", "..", "spec", "helper_methods")
 include HelperMethods
 
 Before do
   DatabaseCleaner.clean
+  Job::RetrieveHistrory.stub(:perform).and_return(true)
+  $process_queue = true
 end
 
 silence_warnings do
   SERVICES['facebook'] = {'app_id' => :fake}
-end
-module Resque
-  def enqueue(klass, *args)
-    klass.send(:perform, *args)
-  end
 end
 
 Before('@localserver') do
