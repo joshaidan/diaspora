@@ -28,7 +28,6 @@ Feature: disconnecting users
     When I sign in as "alice@alice.alice"
     And I am on "bob@bob.bob"'s page
 
-    And I debug
     Then I should <see> "is sharing with you."
 
     Examples:
