@@ -4,12 +4,13 @@ module HelperMethods
   end
   def connect_users(user1, aspect1, user2, aspect2)
     user1.contacts.create!(:person => user2.person,
-                           :aspects => [aspect1],
-                           :mutual => true)
+                      :aspects => [aspect1],
+                      :mutual => true)
 
     user2.contacts.create!(:person => user1.person,
                            :aspects => [aspect2],
                            :mutual => true)
+
   end
 
   def stub_success(address = 'abc@example.com', opts = {})
