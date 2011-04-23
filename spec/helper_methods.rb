@@ -3,14 +3,25 @@ module HelperMethods
     connect_users(u1, u1.aspects.first, u2, u2.aspects.first)
   end
   def connect_users(user1, aspect1, user2, aspect2)
-    user1.contacts.create!(:person => user2.person,
+    c1 = user1.contacts.create!(:person => user2.person,
                       :aspects => [aspect1],
                       :mutual => true)
 
-    user2.contacts.create!(:person => user1.person,
+    c2 = user2.contacts.create!(:person => user1.person,
                            :aspects => [aspect2],
                            :mutual => true)
+    [c1, c2].each do |contact|
+      client = Client.create!(:contact => contact)
+      AccessToken.create!(:client => client)
+      RefreshToken.create!(:client => client)
+    end
 
+    [c1, c2].permutation(2).each do |a,b|
+      a.create_access_token(:token => b.client.access_tokens.first.token)
+      a.create_refresh_token(:token => b.client.refresh_tokens.first.token)
+    end
+
+    [c1, c2]
   end
 
   def stub_success(address = 'abc@example.com', opts = {})
