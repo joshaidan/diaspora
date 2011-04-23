@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'rack/oauth2'
 
 describe ApisController do
    before(:all) do
@@ -42,14 +43,15 @@ describe ApisController do
   end
 
   context 'protected timelines' do
-    let(:authenticate){
+    def authenticate(contact)
       @request_hash = {:format => :xml}
-      if @contact
-        @request_hash[:access_token] = @contact.client.access_tokens.valid.first
-        @request_hash[:screen_name] = @contact.person.diaspora_handle
+      if contact
+        @request_hash[:oauth_token] = contact.client.access_tokens.valid.first.token
+
+        #@request_hash['Authorization'] = "Bearer #{@request_hash[:oauth_token]}"
+        @request_hash[:screen_name] = contact.person.diaspora_handle
       end
-      pp @request_hash
-    }
+    end
 
     before do
       @message1 = alice.post(:status_message, :text=> "hello", :to => alice.aspects.first)
@@ -123,8 +125,7 @@ describe ApisController do
           end
 
           it 'shows alice' do
-            @contact = bob.contact_for(alice)
-            authenticate
+            authenticate bob.contact_for(alice.person)
             get :user_timeline, @request_hash 
             p = Diaspora::Parser.from_xml(response.body)
 
@@ -133,9 +134,8 @@ describe ApisController do
           end
 
           it 'shows eve' do
-            @contact = bob.contact_for(eve)
-            authenticate
-            get :user_timeline, @request_hash 
+            authenticate bob.contact_for(eve.person)
+            get :user_timeline, @request_hash
             p = Diaspora::Parser.from_xml(response.body)
 
             p.length.should == 1
@@ -143,8 +143,7 @@ describe ApisController do
           end
 
           it 'shows bob' do
-            @contact = bob.contact_for(bob)
-            authenticate
+            authenticate bob.contact_for(bob.person)
             get :user_timeline, @request_hash 
             p = Diaspora::Parser.from_xml(response.body)
             p.length.should == 0
@@ -157,8 +156,8 @@ describe ApisController do
           end
 
           it 'shows alice' do
-            @contact = alice.contact_for(alice)
-            authenticate
+            pending "This is alice accessing her own private stuff, client app"
+            authenticate alice.contact_for(alice.person)
             get :user_timeline, @request_hash 
             p = Diaspora::Parser.from_xml(response.body)
 
@@ -167,12 +166,9 @@ describe ApisController do
           end
 
           it 'shows eve' do
-            @contact = alice.contact_for(eve)
-            authenticate
+            authenticate alice.contact_for(eve.person)
             get :user_timeline, @request_hash
             p = Diaspora::Parser.from_xml(response.body)
-
-            pp p
 
             p.length.should == 0
           end
