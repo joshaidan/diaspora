@@ -68,6 +68,9 @@ class PeopleController < ApplicationController
 
       if current_user
         @contact = current_user.contact_for(@person)
+
+        Resque.enqueue(Job::RetrieveHistory, current_user.id, @person.id) if @contact.nil? || @contact.fetched_at.blank?
+        
         @aspects_with_person = []
         if @contact && !params[:only_posts]
           @aspects_with_person = @contact.aspects
@@ -85,8 +88,6 @@ class PeopleController < ApplicationController
           @commenting_disabled = false
         end
         @posts = current_user.posts_from(@person).where(:type => "StatusMessage").includes(:comments).limit(15).offset(15*(params[:page]-1))
-
-        Resque.enqueue(Job::RetrieveHistory, current_user.id, @person.id)
 
       else
         @commenting_disabled = true

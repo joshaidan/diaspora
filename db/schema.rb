@@ -95,6 +95,7 @@ ActiveRecord::Schema.define(:version => 20110412230914) do
     t.datetime "updated_at"
     t.string   "mongo_id"
     t.boolean  "mutual",     :default => false, :null => false
+    t.datetime "fetched_at"
   end
 
   add_index "contacts", ["mongo_id"], :name => "index_contacts_on_mongo_id"
