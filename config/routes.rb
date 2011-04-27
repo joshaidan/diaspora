@@ -23,7 +23,7 @@ Diaspora::Application.routes.draw do
   get 'tags/:name' => 'tags#show', :as => 'tag'
   resources :tags, :only => [:index]
 
-  resource :like, :only => [:create]
+  resources :likes, :only => [:create, :destroy]
 
   resources :conversations do
     resources :messages, :only => [:create, :show]
