@@ -225,6 +225,7 @@ ActiveRecord::Schema.define(:version => 20110412230914) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.string   "mongo_id"
+    t.datetime "fetched_at"
   end
 
   add_index "people", ["diaspora_handle"], :name => "index_people_on_diaspora_handle", :unique => true
