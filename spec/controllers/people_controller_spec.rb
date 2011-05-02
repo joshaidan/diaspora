@@ -8,7 +8,7 @@ describe PeopleController do
   render_views
 
   before do
-    @user = alice
+    @user = local_luke
     @aspect = @user.aspects.first
     sign_in :user, @user
   end
@@ -181,7 +181,8 @@ describe PeopleController do
 
     context "when the person is a contact of the current user" do
       before do
-        @person = bob.person
+        @local_person = bob.person
+        @person = remote_raphael
       end
 
       it "succeeds" do
@@ -203,7 +204,9 @@ describe PeopleController do
         posts_user_can_see << bob.post(:status_message, :text => "public", :to => 'all', :public => true)
         bob.reload.posts.length.should == 4
 
-        get :show, :id => @person.id
+        sign_out :user
+        sign_in :user, alice
+        get :show, :id => bob.person.id
         assigns(:posts).models.should =~ posts_user_can_see
       end
 
@@ -213,23 +216,28 @@ describe PeopleController do
       end
 
       it 'enqueues a job to retrieve history if the fetched_at is blank' do
-        Resque.should_receive(:enqueue).with(Job::RetrieveHistory, alice.id, @person.id)
+        Resque.should_receive(:enqueue).with(Job::RetrieveHistory, @user.id, @person.id)
         get :show, :id => @person.id
       end
 
+      it 'does not enqueue a job if the person is local' do
+        Resque.should_not_receive(:enqueue).with(Job::RetrieveHistory, @user.id, @local_person.id)
+        get :show, :id => @local_person.id
+      end
+
       it 'does not enqueue a job to retrieve history if the fetched_at is not blank' do
-        c = alice.contact_for(bob.person)
+        c = @user.contact_for(@person)
         c.fetched_at = Time.now
         c.save
 
-        Resque.should_not_receive(:enqueue).with(Job::RetrieveHistory, alice.id, @person.id)
+        Resque.should_not_receive(:enqueue).with(Job::RetrieveHistory, @user.id, @person.id)
         get :show, :id => @person.id
       end
     end
 
     context "when the person is not a contact of the current user" do
       before do
-        @person = eve.person
+        @person = Factory(:person)
       end
 
       it "succeeds" do
@@ -249,7 +257,9 @@ describe PeopleController do
         public_post = eve.post(:status_message, :text => "public", :to => 'all', :public => true)
         eve.reload.posts.length.should == 3
 
-        get :show, :id => @person.id
+        sign_out :user
+        sign_in :user, alice
+        get :show, :id => eve.person.id
         assigns[:posts].models.should =~ [public_post]
       end
 
@@ -268,7 +278,7 @@ describe PeopleController do
         it 'queues a job to retrieve history if can fetch' do
           @person.stub(:can_fetch).and_return(true)
           
-          Resque.should_receive(:enqueue).with(Job::RetrieveHistory, alice.id, @person.id)
+          Resque.should_receive(:enqueue).with(Job::RetrieveHistory, @user.id, @person.id)
           get :show, :id => @person.id
         end
 

@@ -45,7 +45,6 @@ require File.join(File.dirname(__FILE__), "..", "..", "spec", "support", "fake_h
 require File.join(File.dirname(__FILE__), "..", "..", "spec", "support", "fake_resque")
 require File.join(File.dirname(__FILE__), "..", "..", "spec", "support", "receive_tokens_stub")
 require File.join(File.dirname(__FILE__), "..", "..", "spec", "helper_methods")
-require File.join(File.dirname(__FILE__), "fake_retrieve_history")
 include HelperMethods
 
 Before do
