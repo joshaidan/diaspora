@@ -178,6 +178,7 @@ describe PeopleController do
         get :show, :id => @person.id
       end
     end
+
     context "when the person is a contact of the current user" do
       before do
         @person = bob.person
@@ -257,9 +258,26 @@ describe PeopleController do
         assigns(:commenting_disabled).should == true
       end
 
-      it 'queues a job to retrieve history' do
-        Resque.should_receive(:enqueue).with(Job::RetrieveHistory, alice.id, @person.id)
-        get :show, :id => @person.id
+      describe 'queue-ing' do
+        before do
+          Person.stub(:where){ |params|
+            params[:id] == @person.id ? [@person] : Person.find_all_by_id(params[:id])
+          }
+        end
+
+        it 'queues a job to retrieve history if can fetch' do
+          @person.stub(:can_fetch).and_return(true)
+          
+          Resque.should_receive(:enqueue).with(Job::RetrieveHistory, alice.id, @person.id)
+          get :show, :id => @person.id
+        end
+
+        it 'queues a job to retrieve history if can not fetch' do
+          @person.stub(:can_fetch).and_return(false)
+
+          Resque.should_not_receive(:enqueue)
+          get :show, :id => @person.id
+        end
       end
     end
   end
