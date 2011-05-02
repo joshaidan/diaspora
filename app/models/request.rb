@@ -68,7 +68,7 @@ class Request
       contact.save
     end
 
-    receive_tokens(contact)
+    contact.receive_tokens
 
     self
   end
